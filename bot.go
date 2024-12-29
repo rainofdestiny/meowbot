@@ -30,7 +30,7 @@ func handleMessage(bot *tgbotapi.BotAPI, redisClient *redis.Client, msg *tgbotap
 		count, _ := redisClient.Incr(ctx, key).Result()
 
 		name := msg.ReplyToMessage.From.FirstName
-		response := fmt.Sprintf("%s был помяукан уже %d %s!", name, count, getDeclension(count))
+		response := fmt.Sprintf("%s был помяукан уже %d %s!", name, count, getDeclension(int(count)))
 		bot.Send(tgbotapi.NewMessage(msg.Chat.ID, response))
 		return
 	}
