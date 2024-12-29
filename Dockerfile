@@ -2,11 +2,12 @@ FROM golang:1.20
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN go mod download
+COPY . .
 
-COPY . ./
+COPY .env .env
 
-RUN go build -o /meowbot .
+RUN go mod tidy
 
-CMD ["/meowbot"]
+RUN go build -o bot .
+
+CMD ["./bot"]
