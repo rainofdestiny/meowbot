@@ -30,14 +30,20 @@ func handleMessage(bot *tgbotapi.BotAPI, redisClient *redis.Client, msg *tgbotap
 		count, _ := redisClient.Incr(ctx, key).Result()
 
 		name := msg.ReplyToMessage.From.FirstName
-		response := fmt.Sprintf("%s был помяукан уже %d %s!", name, count, getDeclension(int(count)))
-		bot.Send(tgbotapi.NewMessage(msg.Chat.ID, response))
+		response := fmt.Sprintf("%s стал котенком уже %d %s!", name, count, getDeclension(int(count)))
+
+		sentMsg, _ := bot.Send(tgbotapi.NewMessage(msg.Chat.ID, response))
+
+		go func() {
+			time.Sleep(5 * time.Second)
+			bot.DeleteMessage(tgbotapi.NewDeleteMessage(msg.Chat.ID, sentMsg.MessageID))
+		}()
 		return
 	}
 }
 
 func isMeowMessage(text string) bool {
-	meowMessages := []string{"мяу", "мур", "meow", "мяуу", "мяу мяу", "purr", "мурр"}
+	meowMessages := []string{"мяу", "мур", "meow", "мяуу", "мяу мяу", "purr", "мурр", "мур мур"}
 	for _, m := range meowMessages {
 		if strings.EqualFold(text, m) {
 			return true
