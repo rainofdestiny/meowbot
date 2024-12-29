@@ -37,7 +37,11 @@ func handleMessage(bot *tgbotapi.BotAPI, redisClient *redis.Client, msg *tgbotap
 
 		go func() {
 			time.Sleep(5 * time.Second)
-			bot.DeleteMessage(tgbotapi.NewDeleteMessage(msg.Chat.ID, sentMsg.MessageID))
+			deleteConfig := tgbotapi.DeleteMessageConfig{
+				ChatID:    sentMsg.Chat.ID,
+				MessageID: sentMsg.MessageID,
+			}
+			bot.Request(deleteConfig)
 		}()
 		return
 	}
