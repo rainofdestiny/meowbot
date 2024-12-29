@@ -30,14 +30,14 @@ func handleMessage(bot *tgbotapi.BotAPI, redisClient *redis.Client, msg *tgbotap
 		count, _ := redisClient.Incr(ctx, key).Result()
 
 		name := msg.ReplyToMessage.From.FirstName
-		response := fmt.Sprintf("%s был помяукан уже %d раз!", name, count)
+		response := fmt.Sprintf("%s был помяукан уже %d %s!", name, count, getDeclension(count))
 		bot.Send(tgbotapi.NewMessage(msg.Chat.ID, response))
 		return
 	}
 }
 
 func isMeowMessage(text string) bool {
-	meowMessages := []string{"мяу", "мур", "meow"}
+	meowMessages := []string{"мяу", "мур", "meow", "мяуу", "мяу мяу", "purr", "мурр"}
 	for _, m := range meowMessages {
 		if strings.EqualFold(text, m) {
 			return true
@@ -50,6 +50,17 @@ func mirrorShield(msg *tgbotapi.Message) bool {
   if msg.ReplyToMessage.From.ID == msg.From.ID || msg.ReplyToMessage.From.IsBot {
     return false 
   }
-
   return true 
 }
+
+func getDeclension(count int) string {
+	switch {
+	case count%10 == 1 && count%100 != 11:
+		return "раз"
+	case count%10 >= 2 && count%10 <= 4 && (count%100 < 10 || count%100 >= 20):
+		return "раза"
+	default:
+		return "раз"
+	}
+}
+
