@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
+  "time"
 
 	"github.com/go-redis/redis/v8"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -26,7 +26,7 @@ func StartBot(bot *tgbotapi.BotAPI, redisClient *redis.Client) {
 func handleMessage(bot *tgbotapi.BotAPI, redisClient *redis.Client, msg *tgbotapi.Message) {
 	ctx := context.Background()
 
-	if msg.ReplyToMessage != nil && isMeowMessage(msg.Text) && mirrorShield(msg) {
+  if msg.ReplyToMessage != nil && isMeowMessage(msg.Text) && mirrorShield(msg) {
 		key := fmt.Sprintf("%d:%d", msg.Chat.ID, msg.ReplyToMessage.From.ID)
 		count, _ := redisClient.Incr(ctx, key).Result()
 
@@ -36,15 +36,16 @@ func handleMessage(bot *tgbotapi.BotAPI, redisClient *redis.Client, msg *tgbotap
 		sentMsg, _ := bot.Send(tgbotapi.NewMessage(msg.Chat.ID, response))
 
 		go func() {
-			time.Sleep(5 * time.Second)
+			time.Sleep(1 * time.Hour)
 			deleteConfig := tgbotapi.DeleteMessageConfig{
 				ChatID:    sentMsg.Chat.ID,
 				MessageID: sentMsg.MessageID,
 			}
 			bot.Request(deleteConfig)
 		}()
+
 		return
-	}
+  }
 }
 
 func isMeowMessage(text string) bool {
