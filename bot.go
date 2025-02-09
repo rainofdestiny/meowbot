@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+  "strconv"
   "time"
 
 	"github.com/go-redis/redis/v8"
@@ -26,17 +27,40 @@ func StartBot(bot *tgbotapi.BotAPI, redisClient *redis.Client) {
 func handleMessage(bot *tgbotapi.BotAPI, redisClient *redis.Client, msg *tgbotapi.Message) {
 	ctx := context.Background()
 
-  if msg.ReplyToMessage != nil && isMeowMessage(msg.Text) && mirrorShield(msg) {
-		key := fmt.Sprintf("%d:%d", msg.Chat.ID, msg.ReplyToMessage.From.ID)
-		count, _ := redisClient.Incr(ctx, key).Result()
+	if isMeowMessage(msg.Text) {
+		var key string
+		var name string
+		var count int64
 
-		name := msg.ReplyToMessage.From.FirstName
-		response := fmt.Sprintf("%s стал котенком уже %d %s!", name, count, getDeclension(int(count)))
+		if msg.ReplyToMessage != nil && mirrorShield(msg) {
+			key = fmt.Sprintf("%d:%d", msg.Chat.ID, msg.ReplyToMessage.From.ID)
+			var err error
+			count, err = redisClient.Incr(ctx, key).Result()
+			if err != nil {
+				return
+			}
+			name = msg.ReplyToMessage.From.FirstName
+		} else {
+			key = fmt.Sprintf("%d:%d", msg.Chat.ID, msg.From.ID)
+			strCount, err := redisClient.Get(ctx, key).Result()
+			if err != nil {
+				return
+			}
+			count, err = strconv.ParseInt(strCount, 10, 64)
+			if err != nil {
+				return
+			}
+			name = msg.From.FirstName
+		}
 
-		sentMsg, _ := bot.Send(tgbotapi.NewMessage(msg.Chat.ID, response))
+		response := fmt.Sprintf("%s стал котенком уже %d %s", name, count, getDeclension(int(count)))
+		sentMsg, err := bot.Send(tgbotapi.NewMessage(msg.Chat.ID, response))
+		if err != nil {
+			return
+		}
 
 		go func() {
-			time.Sleep(1 * time.Hour)
+			time.Sleep(15 * time.Minute)
 			deleteConfig := tgbotapi.DeleteMessageConfig{
 				ChatID:    sentMsg.Chat.ID,
 				MessageID: sentMsg.MessageID,
@@ -45,11 +69,11 @@ func handleMessage(bot *tgbotapi.BotAPI, redisClient *redis.Client, msg *tgbotap
 		}()
 
 		return
-  }
+	}
 }
-
 func isMeowMessage(text string) bool {
-	meowMessages := []string{"мяу", "мур", "meow", "мяуу", "мяу мяу", "purr", "мурр", "мур мур"}
+  meowMessages := []string{"мяу", "мур", "meow", "purr",}
+
 	for _, m := range meowMessages {
 		if strings.EqualFold(text, m) {
 			return true
